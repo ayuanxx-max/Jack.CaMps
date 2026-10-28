@@ -107,6 +107,19 @@ __acReport()
 - 时间取自提问节点的事件时间；极少数节点没有 `time` 时不显示时间，只显示摘要。
 - 未发布到 npm，按上面的本地 link 方式安装。
 
+### 同类项目
+
+DSH 生态里已有若干「回合折叠」插件，取舍不同：
+
+| 项目 | 形态 | 与本项目的差别 |
+| --- | --- | --- |
+| [a179-sanae/dsh-auto-collapse](https://github.com/a179-sanae/dsh-auto-collapse) | 把正文之间的思考/工具/上下文合成二级折叠，保留原生回合摘要 | 答案始终可见；不限制同时展开的轮数 |
+| [leon-zym/dsh-fold-turns](https://github.com/leon-zym/dsh-fold-turns) | 完成回合折成一行 `Worked for …`，保留用户消息与回答 | 已标记弃用（DSH 0.1.5+ 原生支持过程折叠） |
+| [tntcannon5000/dsh-chat-fold](https://github.com/tntcannon5000/dsh-chat-fold) | 在最终回答上方插入 disclosure | 回答不隐藏；不是手风琴 |
+| **本项目** | **整轮（提问 + 回答 + 过程）压成一行，只允许一条展开** | 空间优先：点开才看该轮内容 |
+
+选择建议：想「一眼扫完所有答案」用上面那类；想「一屏看完整个会话骨架、按需展开」用本项目。
+
 ### 许可证
 
 MIT，见 [LICENSE](LICENSE)。
@@ -211,6 +224,19 @@ It prints `id / expanded / stamp / summary / items` per turn. After an upstream 
 - The folded row is self-drawn, so links inside a question need one click to expand first.
 - Timestamps come from the question node's event time; the rare node without `time` shows a summary only.
 - Not published to npm; install it through the local link shown above.
+
+### Similar projects
+
+The DSH ecosystem already has a few turn-folding plugins. They make a different trade-off:
+
+| Project | Shape | Difference from this one |
+| --- | --- | --- |
+| [a179-sanae/dsh-auto-collapse](https://github.com/a179-sanae/dsh-auto-collapse) | Merges reasoning/tool/context blocks between prose into a secondary disclosure, keeping the native turn summary | The answer always stays visible; several turns can be open at once |
+| [leon-zym/dsh-fold-turns](https://github.com/leon-zym/dsh-fold-turns) | Folds a completed turn into a `Worked for …` row, keeping the user message and answer | Marked deprecated (DSH 0.1.5+ folds processes natively) |
+| [tntcannon5000/dsh-chat-fold](https://github.com/tntcannon5000/dsh-chat-fold) | Inserts a disclosure above the final answer | The answer stays visible; not an accordion |
+| **This project** | **Folds the whole turn (question + answer + process) into one row and allows only one open turn** | Space first: click a row to read that turn |
+
+Pick the former if you want to skim every answer at once; pick this one if you want the whole session skeleton on one screen and open turns on demand.
 
 ### License
 
