@@ -1,0 +1,4 @@
+# Loader patch for the dsh-session-accordion bundle.
+- insert:
+    - id: session-accordion
+      name: 'dsh-session-accordion'

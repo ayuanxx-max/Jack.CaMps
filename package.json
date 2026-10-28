@@ -1,0 +1,39 @@
+{
+  "name": "dsh-session-accordion",
+  "version": "2.4.0",
+  "private": false,
+  "description": "DSH Web chat turn accordion: fold every interaction into one line (time + question summary) and keep only the latest turn open.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "chat",
+    "accordion",
+    "collapse",
+    "transcript"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    }
+  }
+}
