@@ -2,6 +2,13 @@
 
 All notable changes to **DSH 会话交互折叠功能 / DSH Session Turn Accordion**.
 
+## 2.5.0 — 2026-10-29
+
+- 展开态由「每条轮次各记一个布尔值」改为**全局唯一的 `expandedId`**：打开任何会话只展开最近一条。
+- 会话切换 / 历史节点消失 / 新轮追加三种事件都会把展开态重置到最新一轮；此前手动展开的轮次在新交互出现时一律折叠。
+- The open state is now a single global `expandedId` instead of a per-turn map: opening any session expands only the newest turn.
+- Session switch, vanished history nodes and an appended new turn all re-point the open state to the latest turn; previously manual expansions fold when a new interaction starts.
+
 ## 2.4.0 — 2026-10-28
 
 - 视觉打磨：时间胶囊（定宽 86px、tabular-nums）、摘要独立列、右侧 chevron、hover/active 状态、展开 0.16s 淡入。

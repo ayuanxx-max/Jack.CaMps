@@ -15,7 +15,7 @@ Fold every interaction in a DSH Web chat into a single line and keep only the la
 一个 DSH（DeepSeek Harness）客户端插件。它不修改 `app.asar`、不碰核心 UI 源码，只在渲染层做三件事：
 
 1. 每个历史交互整轮收起，折叠成**固定一行**：左侧时间胶囊 `MM-DD HH:mm` + 单行提问摘要（超出省略）。
-2. 只保留**最近一次交互**展开；进入会话、切换会话、出现新一轮都自动收敛。
+2. 只保留**最近一次交互**展开；打开任何会话、切换工作区/会话、产生新交互，都会把展开态重置到最近一条（之前手动展开的也会被收起）。
 3. 点折叠行 → 该轮展开，同时把其它已展开的轮收起；再点提问 → 收回去。
 
 执行过程（思考、工具调用、步骤）不跟着展开：核心本身在回答结束时会收起过程，只有你单独点「过程摘要」那一行才会展开。
@@ -133,7 +133,7 @@ MIT，见 [LICENSE](LICENSE)。
 A client plugin for DSH (DeepSeek Harness). It never edits `app.asar` or any core UI source; it only layers three behaviours on top of the rendered transcript:
 
 1. Every finished interaction collapses into **one fixed line**: a time pill (`MM-DD HH:mm`) plus a single-line summary of your question, ellipsized when long.
-2. Only the **latest interaction** stays open. Entering a session, switching sessions, or a new turn all converge to that state automatically.
+2. Only the **latest interaction** stays open; opening any session, switching workspace/session, or starting a new turn resets the open state to the newest turn (manual expansions are folded too).
 3. Clicking a collapsed row expands that turn and folds any other open turn; clicking the question again folds it back.
 
 The execution process (thinking, tool calls, steps) does not expand with the turn: DSH folds it when the answer completes, and it opens only when you click its own summary row.

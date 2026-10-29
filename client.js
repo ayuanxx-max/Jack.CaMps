@@ -1,19 +1,18 @@
 /**
- * DSH 轮次手风琴（整轮折叠 / 提问单行摘要 / 日期时间）
+ * DSH 轮次手风琴（整轮折叠 / 提问单行摘要 / 日期时间 / 会话级重置）
  *
  * 行为（全工作区 / 全会话）：
- *   1. 收敛态：每个历史交互压成一行卡片 —— 左侧时间胶囊（MM-DD HH:mm）+ 单行提问摘要（省略号）；
- *      执行过程、回答正文、气泡内其它内容全部隐藏；
- *   2. 点这一行 → 该轮展开（提问全文 + 回答正文 + 原生折叠的过程头，带淡入），其它展开轮收起；
- *      再点提问 → 收回一行；
- *   3. 执行过程由核心「回答结束后收起」负责，只有单独点过程头才展开。
+ *   1. 打开任何会话：只展开**最近一条**交互，历史交互各占一行
+ *      （时间胶囊 + 提问摘要 + chevron），过程与回答全部隐藏；
+ *   2. 产生新交互：新的一轮自动展开，之前所有展开的轮次（包括手动展开的）一律折叠；
+ *   3. 切换工作区/会话：状态整体重置，仍然只展开最近一条。
  *
- * 时间来源（按优先级）：React fiber 的 `props.node.data.time` → 原生 `*_timeStart` 文本 → 无。
+ * 唯一展开态由 `expandedId`（单个 turnId）表示；会话切换/历史消失/新轮追加
+ * 三种事件都会把 `expandedId` 重新指向列表最后一条。
  *
- * 视觉：时间胶囊用 tabular-nums 保证数字等宽；行 hover 有底色与文字提亮；右侧 chevron 提示可点；
- *       展开时内容 0.16s 淡入（仅一次，不干扰流式输出）。
+ * 时间来源：React fiber 的 `props.node.data.time` → 原生 `*_timeStart` 文本 → 无。
  *
- * 安全阀：结构认不出就不动作；异常只 warn；不改核心配置。
+ * 安全阀：结构认不出就不动作；异常只 warn；不改核心配置、不碰 app.asar。
  */
 window.__ModuleLoader__.load({
   id: '@local/auto-collapse',
@@ -34,7 +33,13 @@ window.__ModuleLoader__.load({
       '%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27' +
       '%3E%3Cpolyline%20points=%279%206%2015%2012%209%2018%27/%3E%3C/svg%3E")';
 
-    const open = new Map();
+    /** 当前会话说：唯一展开的 turnId；null = 全部折叠。 */
+    let expandedId = null;
+    /** 上一帧看到的 turnId 序列，用来判定「追加 / 消失 / 新会话」。 */
+    let seenIds = [];
+    /** 上一帧的聊天流容器，容器换人 = 换了会话视图。 */
+    let flowRef = null;
+
     const textCache = new WeakMap();
     let pending = false;
     let started = false;
@@ -241,24 +246,75 @@ window.__ModuleLoader__.load({
       }, 200);
     }
 
+    function resetState() {
+      expandedId = null;
+      seenIds = [];
+      flowRef = null;
+    }
+
+    /**
+     * 依据「容器变化 / 历史消失 / 新轮追加」决定当前唯一展开的轮次。
+     * @returns 本轮 turnId 序列（供渲染使用）
+     */
+    function trackExpanded(flow, list) {
+      const ids = list.map(function (group) {
+        return group.id;
+      });
+      if (flow === null || ids.length === 0) {
+        resetState();
+        return ids;
+      }
+      const last = ids[ids.length - 1];
+      if (flow !== flowRef) {
+        expandedId = last;
+      } else {
+        const prev = seenIds;
+        let missing = false;
+        for (let i = 0; i < prev.length; i++) {
+          if (ids.indexOf(prev[i]) === -1) {
+            missing = true;
+            break;
+          }
+        }
+        let appended = prev.length > 0 && ids.length > prev.length;
+        if (appended) {
+          for (let i = 0; i < prev.length; i++) {
+            if (ids[i] !== prev[i]) {
+              appended = false;
+              break;
+            }
+          }
+        }
+        if (missing || appended) {
+          expandedId = last;
+        } else if (expandedId !== null && ids.indexOf(expandedId) === -1) {
+          expandedId = last;
+        } else if (expandedId === null && prev.length === 0) {
+          expandedId = last;
+        }
+      }
+      flowRef = flow;
+      seenIds = ids;
+      return ids;
+    }
+
     function apply() {
       ensureStyle();
       const flow = findFlow();
-      if (flow === null) return 0;
+      if (flow === null) {
+        resetState();
+        return 0;
+      }
+      // 会话视图被隐藏（display:none 的旧视图）时视为「离开会话」，回到可见即重置为最新一条。
+      if (flow.getClientRects().length === 0) {
+        resetState();
+        return 0;
+      }
       const list = groups(flow);
-      const alive = new Set(list.map(function (group) {
-        return group.id;
-      }));
-      Array.from(open.keys()).forEach(function (id) {
-        if (!alive.has(id)) open.delete(id);
-      });
+      trackExpanded(flow, list);
       for (let i = 0; i < list.length; i++) {
         const group = list[i];
-        let expanded = open.get(group.id);
-        if (expanded === undefined) {
-          expanded = i === list.length - 1;
-          open.set(group.id, expanded);
-        }
+        const expanded = group.id === expandedId;
         const parts = pick(group);
         const user = parts.user;
         if (user !== null) {
@@ -296,8 +352,7 @@ window.__ModuleLoader__.load({
     function toggle(el) {
       const id = el.getAttribute('data-chat-turn');
       if (!id) return;
-      const now = open.get(id) === true;
-      open.set(id, !now);
+      expandedId = expandedId === id ? null : id;
       apply();
     }
 
@@ -333,15 +388,16 @@ window.__ModuleLoader__.load({
 
     function report() {
       const flow = findFlow();
-      if (flow === null) return { flow: false };
+      if (flow === null) return { flow: false, expandedId };
       return {
         flow: true,
+        expandedId,
         turns: groups(flow).map(function (group) {
           const parts = pick(group);
           const bubble = parts.user === null ? null : parts.user.querySelector('[class*="_bubble"]');
           return {
             id: group.id,
-            expanded: open.get(group.id) === true,
+            expanded: group.id === expandedId,
             stamp: parts.user === null ? '' : stampOf(parts.user, bubble),
             summary: parts.user === null ? '' : summaryOf(bubble, parts.user).slice(0, 60),
             items: group.items.length,
