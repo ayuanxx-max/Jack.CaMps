@@ -43,6 +43,7 @@ window.__ModuleLoader__.load({
     const textCache = new WeakMap();
     let pending = false;
     let started = false;
+    let logged = false;
 
     function ensureStyle() {
       if (document.getElementById(STYLE_ID) !== null) return;
@@ -305,13 +306,19 @@ window.__ModuleLoader__.load({
         resetState();
         return 0;
       }
-      // 会话视图被隐藏（display:none 的旧视图）时视为「离开会话」，回到可见即重置为最新一条。
-      if (flow.getClientRects().length === 0) {
+      // `conversation.chat.flow` 是 display:contents 锚点：它自己没有盒子，
+      // getClientRects() 恒为空，可见性只能靠行节点探测。
+      const probe = flow.querySelector(ITEM_SEL);
+      if (probe === null || probe.getClientRects().length === 0) {
         resetState();
         return 0;
       }
       const list = groups(flow);
       trackExpanded(flow, list);
+      if (!logged && list.length > 0) {
+        logged = true;
+        console.info('[auto-collapse] active: turns=' + list.length + ' expanded=' + expandedId);
+      }
       for (let i = 0; i < list.length; i++) {
         const group = list[i];
         const expanded = group.id === expandedId;
