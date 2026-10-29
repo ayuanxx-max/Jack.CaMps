@@ -36,43 +36,56 @@ Fold every interaction in a DSH Web chat into a single line and keep only the la
 
 ### 安装
 
-前置：DSH 桌面版（Web UI），已有一个可用 profile（默认 `desktop`）。
+前置：能跑 DSH Web UI 的宿主 —— Windows / macOS 桌面版，或 Linux 上的 `dsh web`。profile 名随宿主不同：桌面版默认 `desktop`，`dsh web` 默认 `web`，自定义 profile 用你自己的名字。
+
+#### Windows（PowerShell）
 
 ```powershell
-# 1. 取得代码
 git clone https://github.com/ayuanxx-max/dsh-session-accordion.git
-$repo = "<克隆下来的目录绝对路径>"
-
-# 2. 在 profile 里登记为本地包（junction 链接，不复制）
+$repo = (Resolve-Path .\dsh-session-accordion).Path
 $nm = "$env:USERPROFILE\.dsh\profiles\desktop\node_modules"
 New-Item -ItemType Junction -Path "$nm\dsh-session-accordion" -Target $repo
 ```
 
+#### Linux / macOS（bash）
+
+```bash
+git clone https://github.com/ayuanxx-max/dsh-session-accordion.git
+repo="$(cd dsh-session-accordion && pwd)"
+profile="${DSH_PROFILE:-web}"        # 桌面版改成 desktop
+mkdir -p "$HOME/.dsh/profiles/$profile/node_modules"
+ln -sfn "$repo" "$HOME/.dsh/profiles/$profile/node_modules/dsh-session-accordion"
+```
+
+> **符号链接必须是绝对路径**：相对路径在 profile 目录变化后会失效。
+> 也可以一条命令完成（含 package.json 备份与合并）：`bash scripts/install.sh --profile web --apply`。
+> Windows 对应：`powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Profile desktop -Apply`。
+
+#### 登记到 profile（三种系统相同）
+
 ```jsonc
-// 3. 编辑 %USERPROFILE%\.dsh\profiles\desktop\package.json
+// ~/.dsh/profiles/<profile>/package.json
 {
   "dependencies": {
-    "dsh-session-accordion": "link:<repo 绝对路径>"
+    "dsh-session-accordion": "link:/absolute/path/to/dsh-session-accordion"
   },
   "dsh": {
     "profile": {
-      "bundles": [
-        "dsh-session-accordion"   // 加到数组里
-      ]
+      "bundles": ["dsh-session-accordion"]
     }
   }
 }
 ```
 
-4. **完全退出 DSH 再启动**（改的是 profile 层，刷新网页无效）。
+4. **完全退出 DSH 再启动**（profile 层改动，刷新网页无效）。
 5. 设置 → 对话 → **工作步骤收起时机 = 回答结束后**（插件依赖这个前置，过程才会自动收起）。
 
-> 也可以把仓库目录复制进 `node_modules` 再登记，但 junction 方式升级更方便：`git pull` 后重启即可。
+> 复制进 `node_modules` 也能用，但链接方式升级最省事：`git pull` 后重启即可。
 
 ### 卸载
 
 1. 从 `package.json` 的 `dependencies` 与 `dsh.profile.bundles` 中删掉 `dsh-session-accordion`。
-2. 删除 `node_modules\dsh-session-accordion`（junction 删除不会删源目录）。
+2. 删掉链接：Windows `Remove-Item node_modules\dsh-session-accordion`；Linux/macOS `rm ~/.dsh/profiles/<profile>/node_modules/dsh-session-accordion`（只删链接，不动源码）。
 3. 重启 DSH。
 
 ### 工作原理
@@ -154,43 +167,56 @@ The execution process (thinking, tool calls, steps) does not expand with the tur
 
 ### Install
 
-Requires the DSH desktop app (Web UI) with a working profile (default: `desktop`).
+Prerequisite: a host that runs the DSH Web UI — the Windows/macOS desktop app, or `dsh web` on Linux. The profile name depends on the host: `desktop` for the desktop app, `web` for `dsh web`, or your own name for a custom profile.
+
+#### Windows (PowerShell)
 
 ```powershell
-# 1. Get the code
 git clone https://github.com/ayuanxx-max/dsh-session-accordion.git
-$repo = "<absolute path of the clone>"
-
-# 2. Register it in the profile as a local package (junction, no copy)
+$repo = (Resolve-Path .\dsh-session-accordion).Path
 $nm = "$env:USERPROFILE\.dsh\profiles\desktop\node_modules"
 New-Item -ItemType Junction -Path "$nm\dsh-session-accordion" -Target $repo
 ```
 
+#### Linux / macOS (bash)
+
+```bash
+git clone https://github.com/ayuanxx-max/dsh-session-accordion.git
+repo="$(cd dsh-session-accordion && pwd)"
+profile="${DSH_PROFILE:-web}"        # use desktop for the desktop app
+mkdir -p "$HOME/.dsh/profiles/$profile/node_modules"
+ln -sfn "$repo" "$HOME/.dsh/profiles/$profile/node_modules/dsh-session-accordion"
+```
+
+> **The symlink must use an absolute path**; a relative target breaks as soon as the profile directory moves.
+> One-shot alternative (backs up and merges `package.json`): `bash scripts/install.sh --profile web --apply`.
+> Windows equivalent: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Profile desktop -Apply`.
+
+#### Register in the profile (same on every OS)
+
 ```jsonc
-// 3. Edit %USERPROFILE%\.dsh\profiles\desktop\package.json
+// ~/.dsh/profiles/<profile>/package.json
 {
   "dependencies": {
-    "dsh-session-accordion": "link:<absolute repo path>"
+    "dsh-session-accordion": "link:/absolute/path/to/dsh-session-accordion"
   },
   "dsh": {
     "profile": {
-      "bundles": [
-        "dsh-session-accordion"   // add to the array
-      ]
+      "bundles": ["dsh-session-accordion"]
     }
   }
 }
 ```
 
-4. **Quit DSH completely and start it again** (this is a profile-layer change; refreshing the page is not enough).
+4. **Quit DSH completely and start it again** (profile-layer change; refreshing the page is not enough).
 5. Settings → Chat → **When to collapse work details = On completion**. The plugin relies on this so the process folds by itself.
 
-> You can also copy the repo into `node_modules` and register it, but the junction keeps upgrades to `git pull` + restart.
+> Copying the repo into `node_modules` also works, but a symlink keeps upgrades to `git pull` + restart.
 
 ### Uninstall
 
 1. Remove `dsh-session-accordion` from `dependencies` and `dsh.profile.bundles`.
-2. Delete `node_modules\dsh-session-accordion` (deleting the junction leaves the source directory untouched).
+2. Remove the link: Windows `Remove-Item node_modules\dsh-session-accordion`; Linux/macOS `rm ~/.dsh/profiles/<profile>/node_modules/dsh-session-accordion` (the link only; the source directory stays).
 3. Restart DSH.
 
 ### How it works

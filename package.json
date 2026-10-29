@@ -1,6 +1,6 @@
 {
   "name": "dsh-session-accordion",
-  "version": "2.5.2",
+  "version": "2.5.3",
   "private": false,
   "description": "DSH Web chat turn accordion: every interaction folds into one line, only the newest turn opens, and session switches or new turns reset the open state.",
   "type": "module",
@@ -24,7 +24,10 @@
     "client.js",
     "cordis.patch.yml",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "scripts/install.sh",
+    "scripts/install.ps1",
+    "scripts/check.mjs"
   ],
   "dsh": {
     "bundle": {
@@ -43,5 +46,8 @@
   "homepage": "https://github.com/ayuanxx-max/dsh-session-accordion#readme",
   "bugs": {
     "url": "https://github.com/ayuanxx-max/dsh-session-accordion/issues"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

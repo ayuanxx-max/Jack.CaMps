@@ -1,0 +1,86 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: ${{ matrix.os }} · node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Syntax check (client + host halves)
+        shell: bash
+        run: |
+          node --check client.js
+          node --check index.js
+          node --check scripts/check.mjs
+
+      - name: Manifest / encoding check
+        shell: bash
+        run: node scripts/check.mjs
+
+      - name: POSIX installer parses (bash -n)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: bash -n scripts/install.sh
+
+      - name: Windows installer parses (AST)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'scripts/install.ps1'), [ref]$null, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_ }; exit 1 }
+
+      - name: Pack (npm tarball builds on every OS)
+        shell: bash
+        run: |
+          npm pack --pack-destination .
+          ls -l *.tgz
+
+      - name: Installer smoke test (POSIX)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DSH_HOME="$RUNNER_TEMP/dsh-home"
+          mkdir -p "$DSH_HOME/profiles/web/node_modules"
+          printf '{\n  "name": "profile-web",\n  "dependencies": {},\n  "dsh": { "profile": { "bundles": [] } }\n}\n' > "$DSH_HOME/profiles/web/package.json"
+          bash scripts/install.sh --profile web
+          test -L "$DSH_HOME/profiles/web/node_modules/dsh-session-accordion"
+          bash scripts/install.sh --profile web --apply
+          node -e "const p=require('$DSH_HOME/profiles/web/package.json'); if(!p.dsh.profile.bundles.includes('dsh-session-accordion')) process.exit(1); console.log('profile patched')"
+          ls "$DSH_HOME/profiles/web/node_modules/dsh-session-accordion/client.js"
+
+      - name: Installer smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:DSH_HOME = Join-Path $env:RUNNER_TEMP 'dsh-home'
+          New-Item -ItemType Directory -Force "$env:DSH_HOME\profiles\desktop\node_modules" | Out-Null
+          '{"name":"profile-desktop","dependencies":{},"dsh":{"profile":{"bundles":[]}}}' |
+            Set-Content "$env:DSH_HOME\profiles\desktop\package.json" -Encoding UTF8
+          & pwsh -NoProfile -File scripts/install.ps1 -Profile desktop
+          if (-not (Test-Path "$env:DSH_HOME\profiles\desktop\node_modules\dsh-session-accordion\client.js")) { throw 'junction target missing' }
+          & pwsh -NoProfile -File scripts/install.ps1 -Profile desktop -Apply
+          $p = Get-Content "$env:DSH_HOME\profiles\desktop\package.json" -Raw | ConvertFrom-Json
+          if ($p.dsh.profile.bundles -notcontains 'dsh-session-accordion') { throw 'profile not patched' }
+          Write-Output 'profile patched'
