@@ -40,7 +40,7 @@ Fold every interaction in a DSH Web chat into a single line and keep only the la
 
 ```powershell
 # 1. 取得代码
-git clone https://github.com/<owner>/dsh-session-accordion.git
+git clone https://github.com/ayuanxx-max/dsh-session-accordion.git
 $repo = "<克隆下来的目录绝对路径>"
 
 # 2. 在 profile 里登记为本地包（junction 链接，不复制）
@@ -158,7 +158,7 @@ Requires the DSH desktop app (Web UI) with a working profile (default: `desktop`
 
 ```powershell
 # 1. Get the code
-git clone https://github.com/<owner>/dsh-session-accordion.git
+git clone https://github.com/ayuanxx-max/dsh-session-accordion.git
 $repo = "<absolute path of the clone>"
 
 # 2. Register it in the profile as a local package (junction, no copy)

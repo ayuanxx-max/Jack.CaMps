@@ -1,8 +1,8 @@
 {
   "name": "dsh-session-accordion",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "private": false,
-  "description": "DSH Web chat accordion: every interaction folds into one line, only the newest turn opens, and session switches or new turns reset the open state.",
+  "description": "DSH Web chat turn accordion: every interaction folds into one line, only the newest turn opens, and session switches or new turns reset the open state.",
   "type": "module",
   "license": "MIT",
   "keywords": [
@@ -35,5 +35,13 @@
       "immediately": true,
       "inject": []
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ayuanxx-max/dsh-session-accordion.git"
+  },
+  "homepage": "https://github.com/ayuanxx-max/dsh-session-accordion#readme",
+  "bugs": {
+    "url": "https://github.com/ayuanxx-max/dsh-session-accordion/issues"
   }
 }
