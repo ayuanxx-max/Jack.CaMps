@@ -61,6 +61,16 @@ ln -sfn "$repo" "$HOME/.dsh/profiles/$profile/node_modules/dsh-session-accordion
 > 也可以一条命令完成（含 package.json 备份与合并）：`bash scripts/install.sh --profile web --apply`。
 > Windows 对应：`powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Profile desktop -Apply`。
 
+#### 方式 B：直接装 Release 包（无符号链接，Linux 下最省事）
+
+```bash
+# pnpm 会把这枚 tarball 复制进 profile，不依赖符号链接 / junction
+dsh plugin --profile web add /path/to/dsh-session-accordion-2.5.3.tgz
+# 再把 "dsh-session-accordion" 加进 dsh.profile.bundles，重启 DSH
+```
+
+> 升级时下载新 tarball 再执行一次即可，不需要 `git pull`。
+
 #### 登记到 profile（三种系统相同）
 
 ```jsonc
@@ -191,6 +201,16 @@ ln -sfn "$repo" "$HOME/.dsh/profiles/$profile/node_modules/dsh-session-accordion
 > **The symlink must use an absolute path**; a relative target breaks as soon as the profile directory moves.
 > One-shot alternative (backs up and merges `package.json`): `bash scripts/install.sh --profile web --apply`.
 > Windows equivalent: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Profile desktop -Apply`.
+
+#### Option B: install the release tarball (no symlink / junction)
+
+```bash
+# pnpm copies the tarball into the profile; no symlink or junction involved
+dsh plugin --profile web add /path/to/dsh-session-accordion-2.5.3.tgz
+# then add "dsh-session-accordion" to dsh.profile.bundles and restart DSH
+```
+
+> To upgrade, download the new tarball and run the command again; no `git pull` needed.
 
 #### Register in the profile (same on every OS)
 
