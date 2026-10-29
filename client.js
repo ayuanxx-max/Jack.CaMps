@@ -15,7 +15,7 @@
  * 安全阀：结构认不出就不动作；异常只 warn；不改核心配置、不碰 app.asar。
  */
 window.__ModuleLoader__.load({
-  id: '@local/auto-collapse',
+  id: 'dsh-session-accordion',
   factory() {
     const STYLE_ID = 'dsh-auto-collapse-style';
     const FLOW_SEL = '[data-slot="conversation.chat.flow"]';
