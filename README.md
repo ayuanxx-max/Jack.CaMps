@@ -123,6 +123,20 @@ __acReport()
 
 输出每一轮的 `id / expanded / stamp / summary / items`。结构变化（DSH 升级后 DOM 改名）时，看这个能立刻定位是「分组失败」还是「时间取不到」。
 
+### 兼容性
+
+| 平台 / 引擎 | 状态 | 说明 |
+| --- | --- | --- |
+| Windows（DSH 桌面版，Electron/Chromium） | ✅ 主力验证 | 本轮开发基准 |
+| macOS（桌面版；Tauri/WebView 需较新内核） | ✅ 设计兼容 | 只用标准 `mask-image` + 内联 SVG，无平台 API |
+| Ubuntu / Debian 等 Linux（Chrome / Edge / Chromium） | ✅ CI 验证安装链路 | 安装脚本、打包、安装冒烟测试跑在 `ubuntu-latest` 上 |
+| Linux 上的 Firefox | ⚠️ 未实测 | 用到 `mask-image`（Firefox 支持无前缀写法）；最坏情况只失去渐隐，不影响折叠 |
+
+- **时区**：时间胶囊用浏览器时区。Linux 服务器多为 UTC，此时显示的是 UTC；在 Console 执行
+  `window.__dshAccordion = { timeZone: 'Asia/Shanghai' }` 后刷新页面即可覆盖。
+- **动态效果**：尊重系统"减少动态效果"（`prefers-reduced-motion`），开启后不播放展开淡入。
+- **字体**：时间胶囊与摘要列按像素定宽，Ubuntu / SF 字体下宽度略有差异，不影响布局。
+
 ### 已知限制
 
 - 依赖 DSH 聊天面板的内部 DOM 属性（`data-chat-turn` 等），属**非公开契约**，上游改版可能失效；失效时插件静默不动作，不会破坏界面。
@@ -263,6 +277,20 @@ __acReport()
 ```
 
 It prints `id / expanded / stamp / summary / items` per turn. After an upstream UI change this tells you immediately whether grouping failed or the timestamp went missing.
+
+### Compatibility
+
+| Platform / engine | Status | Notes |
+| --- | --- | --- |
+| Windows (DSH desktop, Electron/Chromium) | ✅ primary target | Development baseline |
+| macOS (desktop app; Tauri/WebView needs a recent engine) | ✅ designed to work | Standard `mask-image` plus inline SVG only, no platform APIs |
+| Ubuntu / Debian and other Linux (Chrome / Edge / Chromium) | ✅ install path verified in CI | installer, packaging and install smoke test run on `ubuntu-latest` |
+| Firefox on Linux | ⚠️ not exercised | uses `mask-image` (Firefox ships the unprefixed property); worst case the fade is lost, folding still works |
+
+- **Time zone**: the time pill uses the browser time zone. A Linux server is often UTC, so rows show UTC;
+  run `window.__dshAccordion = { timeZone: 'Asia/Shanghai' }` in the console and reload to override.
+- **Motion**: respects `prefers-reduced-motion`; the expand fade is skipped when it is enabled.
+- **Fonts**: pill and summary columns are pixel-sized, so Ubuntu/SF fonts shift widths slightly without breaking the layout.
 
 ### Known limitations
 

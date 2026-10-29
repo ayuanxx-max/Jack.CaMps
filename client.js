@@ -78,6 +78,8 @@ window.__ModuleLoader__.load({
 
         '@keyframes dsh-ac-fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}',
         '[' + FRESH_ATTR + '="1"]{animation:dsh-ac-fade .16s ease-out}',
+        '[' + LINE_ATTR + '="1"]::after{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}',
+        '@media (prefers-reduced-motion:reduce){[' + FRESH_ATTR + '="1"]{animation:none!important}}',
       ].join('');
       (document.head || document.documentElement).appendChild(tag);
     }
@@ -157,6 +159,16 @@ window.__ModuleLoader__.load({
       return value < 10 ? '0' + value : String(value);
     }
 
+    /** Optional time-zone override: window.__dshAccordion = { timeZone: 'Asia/Shanghai' }. */
+    function timeZoneOf() {
+      try {
+        const cfg = window.__dshAccordion;
+        return cfg && typeof cfg.timeZone === 'string' && cfg.timeZone ? cfg.timeZone : '';
+      } catch (err) {
+        return '';
+      }
+    }
+
     function fmtTime(value) {
       if (value === undefined || value === null) return '';
       let ms;
@@ -166,6 +178,25 @@ window.__ModuleLoader__.load({
       if (!isFinite(ms)) return '';
       const d = new Date(ms);
       if (isNaN(d.getTime())) return '';
+      const zone = timeZoneOf();
+      if (zone) {
+        try {
+          const parts = new Intl.DateTimeFormat('en-CA', {
+            timeZone: zone, month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', hour12: false,
+          }).formatToParts(d);
+          const pick = function (type) {
+            for (let i = 0; i < parts.length; i++) {
+              if (parts[i].type === type) return parts[i].value;
+            }
+            return '';
+          };
+          const out = pick('month') + '-' + pick('day') + ' ' + pick('hour') + ':' + pick('minute');
+          if (/^[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$/.test(out)) return out;
+        } catch (err) {
+          // unknown zone or no Intl support (older WebView): fall through to local time
+        }
+      }
       return pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' +
         pad2(d.getHours()) + ':' + pad2(d.getMinutes());
     }

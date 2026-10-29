@@ -52,7 +52,9 @@ if ($Apply) {
   if (-not $data.dsh.profile) { $data.dsh | Add-Member -NotePropertyName profile -NotePropertyValue ([pscustomobject]@{}) }
   $bundles = @($data.dsh.profile.bundles) | Where-Object { $_ -and $_ -ne $pkgName }
   $data.dsh.profile | Add-Member -NotePropertyName bundles -NotePropertyValue (@($bundles) + $pkgName) -Force
-  $data | ConvertTo-Json -Depth 20 | Set-Content $pkgJson -Encoding UTF8
+  $json = $data | ConvertTo-Json -Depth 20
+  # UTF-8 without BOM: a BOM makes package.json unreadable for node/pnpm on Linux and macOS.
+  [IO.File]::WriteAllText($pkgJson, $json + "`n", (New-Object System.Text.UTF8Encoding($false)))
   Write-Output "package.json patched (backup: $pkgJson.bak-before-accordion)"
 }
 
